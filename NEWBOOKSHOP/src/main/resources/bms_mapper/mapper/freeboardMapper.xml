@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+<mapper namespace="spring.mvc.bms.board.persistance.FreeBoardDAO">
+
+<select id="getAllPostCnt" parameterType="int" resultType="int">
+	SELECT COUNT(*) FROM freeboard
+</select>
+
+<select id="getALLPostList" parameterType="java.util.Map" 
+	resultType="spring.mvc.bms.board.vo.FreeBoardVO">
+	<![CDATA[
+	SELECT *
+	FROM (SELECT board_seq, id, subject, content, readCnt,
+	ref, ref_step, ref_level, reg_date, ip, rownum rNum
+	FROM (
+	SELECT * FROM freeboard
+	ORDER BY ref DESC, ref_step ASC
+	)
+	)
+	WHERE rNum >= #{seenNumStart} AND rNUM <= #{seenNumEnd}
+	]]>
+</select>
+
+<select id="selectOnePost" parameterType="int" 
+	resultType="spring.mvc.bms.board.vo.FreeBoardVO">
+	SELECT * FROM freeboard WHERE board_seq = #{board_seq}
+</select>
+
+<update id="plusReadCnt" parameterType="int">
+	UPDATE freeboard SET readCnt=readCnt+1 WHERE board_seq=#{board_seq}
+</update>
+
+<select id="getAllPostCntById" parameterType="String"
+	resultType="int">
+	SELECT COUNT(*) FROM freeboard WHERE id=#{searchId}
+</select>
+
+<select id="getALLPostListById" parameterType="java.util.Map"
+	resultType="spring.mvc.bms.board.vo.FreeBoardVO">
+	<![CDATA[
+	SELECT *
+	FROM (SELECT board_seq, id, subject, content, readCnt,
+	ref, ref_step, ref_level, reg_date, ip, rownum rNum
+	FROM (
+	SELECT * FROM freeboard
+	ORDER BY ref DESC, ref_step ASC
+	)
+	)
+	WHERE rNum >= #{seenNumStart} AND rNUM <= #{seenNumEnd} 
+	AND id= #{searchId}
+	]]>
+</select>
+
+<update id="updateOnePost" parameterType="java.util.Map">
+	UPDATE freeboard
+	SET subject=#{subject}, content=#{content}, ip=#{ip}
+	WHERE board_seq=#{board_seq}
+</update>
+
+<delete id="deleteOnePost" parameterType="int">
+	DELETE FROM freeboard WHERE board_seq=#{board_seq}
+</delete>
+
+
+<update id="updateRef" parameterType="java.util.Map">
+	<![CDATA[
+	UPDATE freeboard SET ref_step = ref_step+1 WHERE ref=#{ref} AND ref_step > #{ref_step}
+	]]>
+</update>
+
+
+<insert id="insertNewPost" parameterType="spring.mvc.bms.board.vo.FreeBoardVO">
+	INSERT INTO freeboard (board_seq, id,  subject, content, readCnt, ref, ref_step, ref_level, reg_date, ip)
+	VALUES (board_seq.nextval ,#{id},#{subject},#{content},0,#{ref},#{ref_step},#{ref_level},sysdate,#{ip})
+</insert>
+
+</mapper>

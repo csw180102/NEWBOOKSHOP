@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- mapper속성이 MemberDAO, BoardDAO 두갠데.. 두개만들어야되나 -->
+<mapper namespace="spring.mvc.bms.board.persistance.BookBoardDAO">
+
+<!-- 책 리스트 쫙 뜨는 sql 시작 -->
+	<select id="selectAllStock" parameterType="java.util.Map"
+		resultType="spring.mvc.bms.board.vo.BookBoardVO">
+		<![CDATA[
+		SELECT * FROM (
+						SELECT image, book_seq, isbn, book_name, author, publisher, domeforei, newold, price, stock, receiving_day, content, rownum rNum
+					    FROM (
+					    SELECT * FROM book
+					    ORDER BY book_seq DESC
+					    )
+					    ) WHERE rNum >= #{seenNumStart} AND rNum <= #{seenNumEnd}
+		]]>
+	</select>
+
+	<!-- 책 총갯수 구하기 -->
+	<select id="selectAllStockCnt" resultType="int">
+		SELECT COUNT(*) FROM book
+	</select>
+	
+	<!-- 책 세부정보 출력 -->
+	<select id="getStockDetail" parameterType="int"
+		resultType="spring.mvc.bms.board.vo.BookBoardVO">
+		SELECT * FROM book WHERE book_seq = #{book_seq}
+	</select>
+<!-- 책 리스트 쫙 뜨는 sql 종료 -->
+	
+	
+	
+<!-- 관리자 재고관리 시작 -->
+	<!-- 책 재고 삭제 -->
+	<delete id="deleteStock" parameterType="int">
+		DELETE FROM book WHERE book_seq = #{book_seq}
+	</delete>
+	
+	<!-- 책 재고 추가 -->
+	<insert id="insertStock" parameterType="spring.mvc.bms.board.vo.BookBoardVO">
+		INSERT INTO BOOK (image, book_seq, isbn, book_name, author,
+		publisher, domeforei, newold, price, stock, receiving_day, content)
+		VALUES (#{image},book_seq.nextval,#{isbn},#{book_name},#{author},
+		#{publisher},#{domeforei},#{newold},#{price},#{stock},sysdate,#{content})
+	</insert>
+	
+	<!-- 책 재고 수정 -->
+	<update id="updateStock" parameterType="spring.mvc.bms.board.vo.BookBoardVO">
+		UPDATE book SET
+		image=#{image}, isbn=#{isbn}, book_name=#{book_name}, author=#{author},
+		publisher=#{publisher}, domeforei=#{domeforei}, newold=#{newold}, 
+		price=#{price}, stock=#{stock}, content=#{content}
+		WHERE book_seq=#{book_seq}
+	</update>
+<!-- 관리자 재고관리 종료 -->
+	
+
+	
+	
+<!-- 손님 위시리스트 관련 시작 -->
+	<select id="selectAllWishListCnt" parameterType="String" resultType="int">
+		SELECT COUNT(*) FROM wishlist WHERE id=#{sessionId}
+	</select>
+	<select id="selectAllWishList" parameterType="java.util.Map"
+		resultType="spring.mvc.bms.board.vo.WishListVO">
+		<![CDATA[
+		SELECT * FROM (
+		SELECT wishlist_seq, book_seq, id, book_name, author, publisher, price, quantity, rownum rNum
+		FROM (
+		SELECT * FROM wishlist
+		ORDER BY book_seq DESC
+		)
+		) WHERE rNum >= #{seenNumStart} AND rNum <= #{seenNumEnd} AND id=#{sessionId}
+		]]>
+	</select>
+
+	<select id="selectWishAmount" parameterType="String"
+		resultType="spring.mvc.bms.board.vo.TotalPriceVO">
+		SELECT sum(price*quantity) as wish_amount
+		FROM wishlist
+		WHERE id = #{sessionId}
+	</select>
+		
+	<insert id="insertWishlist" parameterType="spring.mvc.bms.board.vo.WishListVO">
+		INSERT INTO wishlist (wishlist_seq, book_seq, id, book_name, author, publisher, price, quantity) 
+		VALUES (wishlist_seq.nextval,#{book_seq},#{id},#{book_name},#{author},#{publisher},#{price},#{quantity})
+	</insert>
+	
+	<delete id="deleteWishList" parameterType="int">
+		DELETE FROM wishlist WHERE wishlist_seq = #{wishlist_seq}
+	</delete>
+<!-- 손님 위시리스트 관련 종료-->
+	
+	
+<!-- 손님 구매리스트/관리자 주문목록현황(buylist테이블 참조, 애초에 테이블명을 orderlist로 만들었어야 했는데...) 관련 시작 -->     
+	<select id="selectAllOrderListCnt" parameterType="java.util.Map" resultType="int">
+		SELECT COUNT(*) FROM buylist
+		<if test="sessionId != null and !sessionId.equals('host')">
+		WHERE id = #{sessionId}
+		</if>
+	</select>
+
+	<insert id="insertOrderList" parameterType="java.util.Map">
+		INSERT INTO buylist (buy_seq, id, book_seq, buy_date, quantity)
+		VALUES (buy_seq.nextval,#{sessionId},#{book_seq},sysdate,#{quantity})
+	</insert>
+	
+	<select id="selectAllOrderList" parameterType="java.util.Map"
+		resultType="spring.mvc.bms.board.vo.OrderListVO">
+		<![CDATA[
+		SELECT * FROM (
+		SELECT buy_seq, id, book_seq, buy_date, quantity, rownum rNum
+		FROM (
+		SELECT * FROM buylist
+		ORDER BY buy_seq DESC
+		)
+		) WHERE rNum >= #{seenNumStart} AND rNum <= #{seenNumEnd}
+		]]>
+		<if test="sessionId != null and !sessionId.equals('host')">
+		AND id = #{sessionId}
+		</if>
+	</select>
+	
+	<!-- resultMap쓰는 방법도 알긴해야 겠는데..  -->
+	<select id="selectOrderAmount" parameterType="java.util.Map"
+		resultType="spring.mvc.bms.board.vo.TotalPriceVO">
+		SELECT sum(book.price*buylist.quantity) as order_amount
+		FROM book, buylist
+		WHERE book.book_seq = buylist.book_seq
+		<if test="sessionId != null and !sessionId.equals('host')">
+		AND buylist.id = #{sessionId}
+		</if>
+	</select>
+	
+	<delete id="deleteOrderList" parameterType="int">
+		DELETE FROM buylist WHERE buy_seq = #{buy_seq}
+	</delete>
+<!-- 손님 구매리스트 관련 종료 -->
+	
+	
+	
+<!-- 관리자  최종승인구매 리스트 관련 시작 -->
+
+
+
+
+
+	<!-- 손님 주문편.. -->
+	<select id="orderStock" parameterType="int" resultType="int">
+		SELECT (book.stock-buylist.quantity)
+		FROM book, buylist
+		WHERE book.book_seq = buylist.book_seq
+		AND buylist.buy_seq = #{buy_seq}
+	</select>
+	<!--  AND book.stock >= buylist.quantity -->
+	
+	<update id="updateStockColumn" parameterType="java.util.Map">
+		<![CDATA[
+		UPDATE book
+		SET stock = #{AfterOrderStock}
+		WHERE book_seq = #{book_seq}
+		]]>
+	</update>
+	
+	<select id="selectOrderList" parameterType="int"
+		resultType="spring.mvc.bms.board.vo.OrderListVO">
+		SELECT * FROM buylist WHERE buy_seq=#{buy_seq}
+	</select>
+	
+	<insert id="insertFinalAdminOrderList" parameterType="spring.mvc.bms.board.vo.OrderListVO">
+		INSERT INTO finalbuylist (buy_seq, id, book_seq, approval_date, quantity)
+		VALUES (#{buy_seq},#{id},#{book_seq},sysdate,#{quantity})
+	</insert>
+	
+	<select id="selectOneFinalOrderList" parameterType="int"
+		resultType="spring.mvc.bms.board.vo.AccountListVO">
+		SELECT * FROM finalbuylist WHERE buy_seq=#{buy_seq}
+	</select>
+	
+	<insert id="insertClosingAccountApprovalList" 
+		parameterType="spring.mvc.bms.board.vo.AccountListVO">
+		INSERT INTO closingaccount (close_seq, buy_seq, refund_seq, id, book_seq, quantity, ar_check, ar_date)
+		VALUES (close_seq.nextval,#{buy_seq},null,#{id},#{book_seq},#{quantity},'inflow',sysdate)
+	</insert>
+	<!-- 손님 주문편 종로 -->
+	
+	<!-- 구매자 승인편 -->
+	<select id="selectAllFinalOrderListCnt" parameterType="java.util.Map" resultType="int">
+		SELECT COUNT(*) FROM finalbuylist
+		<if test='sessionId != null and !sessionId.equals("host")'>
+		WHERE id = #{sessionId}
+		</if>
+	</select>
+	
+	<select id="selectAllFinalOrderList" parameterType="java.util.Map"
+		resultType="spring.mvc.bms.board.vo.OrderListVO">
+		<![CDATA[
+		SELECT * FROM (
+		SELECT buy_seq, id, book_seq, approval_date, quantity, rownum rNum
+		FROM (
+		SELECT * FROM finalbuylist
+		ORDER BY buy_seq DESC
+		)
+		)
+		WHERE rNum >= #{seenNumStart} AND rNum <= #{seenNumEnd}
+		]]>
+		<if test='sessionId != null and !sessionId.equals("host")'>
+		AND id = #{sessionId}
+		</if>
+	</select>
+	
+	<select id="selectFinalAdminOrderAmount" parameterType="java.util.Map"
+		resultType="spring.mvc.bms.board.vo.TotalPriceVO">
+		SELECT sum(book.price*finalbuylist.quantity) as admin_order_amount
+		FROM book, finalbuylist
+		WHERE book.book_seq = finalbuylist.book_seq
+		<if test='sessionId != null and !sessionId.equals("host")'>
+		AND id = #{sessionId}
+		</if>
+	</select>
+	<!-- 관리자 주문편 종료 -->
+<!-- 관리자 최종승인구매 리스트 관련 종료 -->
+	
+<!-- 손님 환불리스트 관련 시작 -->
+	<select id="selectAllRefundListCnt" parameterType="java.util.Map" resultType="int">
+		SELECT COUNT(*) FROM refund
+		<if test="sessionId != null and !sessionId.equals('host')">
+		WHERE id = #{sessionId}
+		</if>
+	</select>
+	
+	<select id="selectAllRefundList" parameterType="java.util.Map"
+		resultType="spring.mvc.bms.board.vo.RefundListVO">
+		<![CDATA[
+		SELECT * FROM (
+		SELECT refund_seq, id, book_seq, quantity, refund_date, rownum rNum
+		FROM (
+		SELECT * FROM refund
+		ORDER BY refund_seq DESC
+		)
+		)
+		WHERE rNum >= #{seenNumStart} AND rNum <= #{seenNumEnd}
+		]]>
+		<if test='sessionId != null and !sessionId.equals("host")'>
+		AND id = #{sessionId}
+		</if>
+	</select>
+	
+	<select id="selectFinalOrderList" parameterType="int"
+		resultType="spring.mvc.bms.board.vo.OrderListVO">
+		SELECT * FROM finalbuylist WHERE buy_seq=#{buy_seq}
+	</select>
+	
+	<insert id="insertRefundList" parameterType="spring.mvc.bms.board.vo.OrderListVO">
+		INSERT INTO refund (refund_seq, id, book_seq, quantity, refund_date)
+		VALUES (refund_seq.nextval,#{id},#{book_seq},#{quantity},sysdate) <!-- vo 써야되나? -->
+	</insert>
+	
+	<delete id="deleteFinalOrderList" parameterType="int">
+		DELETE FROM finalbuylist WHERE buy_seq = #{buy_seq}
+	</delete>
+<!-- 손님 환불리스트 관련 종료 -->
+
+<!-- 관리자 최종환불리스트 관련 시작 -->	
+	<!-- 현재환불요청목록현황 뿌려주기 작업 -->
+	<select id="selectAllFinalRefundListCnt" parameterType="java.util.Map" resultType="int">
+		SELECT COUNT(*) FROM finalrefund
+		<if test="sessionId != null and !sessionId.equals('host')">
+		WHERE id = #{sessionId}
+		</if>
+	</select>
+	
+	<select id="selectAllFinalRefundList" parameterType="java.util.Map"
+		resultType="spring.mvc.bms.board.vo.RefundListVO">
+		<![CDATA[
+		SELECT * FROM (
+		SELECT refund_seq, id, book_seq, quantity, finalrefund_date , rownum rNum
+		FROM (
+		SELECT * FROM finalrefund
+		ORDER BY refund_seq DESC
+		)
+		)
+		WHERE rNum >= #{seenNumStart} AND rNum <= #{seenNumEnd}
+		]]>
+		<if test='sessionId != null and !sessionId.equals("host")'>
+		AND id = #{sessionId}
+		</if>
+	</select>
+
+
+	<select id="refundStock" parameterType="int" resultType="int">
+		SELECT SUM(book.stock+refund.quantity)
+		FROM book, refund
+		WHERE book.book_seq = refund.book_seq
+		AND refund.refund_seq = #{refund_seq}
+	</select>
+	
+	<update id="updateStockColumnPlus" parameterType="java.util.Map">
+		UPDATE book
+		SET stock = #{afterRefundStock}
+		WHERE book_seq = #{book_seq}
+	</update>
+	
+	<select id="selectOneRefundList" parameterType="int"
+		resultType="spring.mvc.bms.board.vo.RefundListVO">
+		SELECT * FROM refund WHERE refund_seq=#{refund_seq}
+	</select>
+	
+	<insert id="insertFinalRefundList" 
+		parameterType="spring.mvc.bms.board.vo.RefundListVO">
+		INSERT INTO finalrefund (refund_seq, id, book_seq, quantity, finalrefund_date)
+		VALUES (#{refund_seq},#{id},#{book_seq},#{quantity},sysdate)
+	</insert>
+	
+	<select id="selectOneFinalRefundList" parameterType="int"
+		resultType="spring.mvc.bms.board.vo.AccountListVO">
+		SELECT * FROM finalrefund WHERE refund_seq=#{refund_seq}
+	</select>
+	
+	<insert id="insertClosingAccountRefundList" 
+		parameterType="spring.mvc.bms.board.vo.AccountListVO">
+		INSERT INTO closingaccount (close_seq, buy_seq, refund_seq, id, book_seq, quantity, ar_check, ar_date)
+		VALUES (close_seq.nextval,null,#{refund_seq},#{id},#{book_seq},#{quantity},'outflow',sysdate)
+	</insert>
+	
+	<delete id="deleteRefundList" parameterType="int">
+		DELETE FROM refund WHERE refund_seq = #{refund_seq}
+	</delete>
+	
+	
+<!-- 관리자 최종환불리스트 관련 종료 -->
+
+<!-- 최종 결산 관련 시작 -->
+	<select id="selectAllClosingAccountListCnt" resultType="int">
+		SELECT COUNT(*) FROM closingaccount
+	</select>
+	
+	<select id="selectAllClosingAccountList" parameterType="java.util.Map"
+		resultType="spring.mvc.bms.board.vo.AccountListVO">
+		<![CDATA[
+		SELECT * FROM (
+		SELECT close_seq, buy_seq, refund_seq, id, book_seq, quantity, ar_date, ar_check, rownum rNum
+		FROM (
+		SELECT * FROM closingaccount
+		ORDER BY close_seq DESC
+		)
+		)
+		WHERE rNum >= #{seenNumStart} AND rNum <= #{seenNumEnd}
+		]]>
+	</select>
+
+	<!-- 월별 총액은 아직.. -->
+	<!-- 1~12번 반복 -->
+	
+	
+	
+</mapper>

@@ -1,0 +1,82 @@
+header {
+		padding:20px; 
+		/* margin-bottom:20px; */
+		width:940px;
+		margin:0 auto;
+	}
+      #jb-container {
+        width: 940px;
+        margin: 0px auto;
+        padding: 20px;
+        /* border: 1px solid #bcbcbc; */
+        height:770px;
+      }
+      #jb-header {
+        padding: 20px;
+        margin-bottom: 10px;
+        /* border: 1px solid #bcbcbc; */
+      }
+      #jb-content {
+        width: 980px;
+        /* padding: 3px; */
+        margin-top:3px;
+        margin-bottom: 10px;
+        float: left;
+        /* border: 1px solid #bcbcbc; */
+        margin-left: auto; 
+        margin-right: auto;
+      }
+      #bookInfo {
+	    /* border: 1px solid red; */
+	    width:33%;
+	    height: 206px;
+	  }
+	  .bookInfo_common {
+	    display:inline-table;
+	    float: left;
+	    width: 145px;
+	    height: 205px;
+	    /* border: 1px solid blue; */
+	    word-break:break-all;
+	  }
+	  .bookInfo_common :hover{
+	  	border: 1px solid #FE2EF7;
+	  }
+
+      #jb-footer {
+        clear: both;
+        padding: 10px;
+        border: 1px solid #bcbcbc;
+        margin:0 auto;
+        width:940px;
+        background-color:#A9A9F5;
+      }
+      
+      #topMenu { 
+      	height: 30px; 
+      	width: 850px;
+      	text-align:center;
+      	margin:0 auto;
+      }
+      #topMenu ul li { 
+      	list-style: none; 
+      	color: white;
+      	background-color: #2d2d2d;
+      	float: left;
+      	line-height: 30px;
+      	vertical-align: middle;
+      	text-align: center;
+      }
+      #topMenu .menuLink {
+      	text-decoration:none;
+      	 color: white;
+      	 display: block;
+      	 width: 150px;
+      	 font-size: 15px;
+      	 font-weight: bold;
+      	 font-family: "Trebuchet MS", Dotum, Arial;
+      }
+      	 #topMenu .menuLink:hover { 
+      	 color: red;
+      	 background-color: #4d4d4d;
+      }

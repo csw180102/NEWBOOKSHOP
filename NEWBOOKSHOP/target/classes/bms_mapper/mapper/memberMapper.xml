@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+<mapper namespace="spring.mvc.bms.member.persistance.MemberDAO">
+	<!-- 입력받은 아이디만 체크 -->
+	<select id="idCheck" parameterType="String" resultType="int">
+		SELECT COUNT(*) FROM member WHERE id=#{strId}
+	</select>
+	<!-- 입력받은 아이디와 비번같이 체크 -->
+	<select id="pwdCheck" parameterType="java.util.Map" resultType="int">
+		SELECT COUNT(*) FROM member WHERE id=#{strId} AND pwd=#{strPwd}
+	</select>
+	
+	
+	<!-- 아이디 중복여부 체크 -->
+	<select id="dupCheck" parameterType="String" resultType="int">
+		SELECT COUNT(*) FROM member WHERE id=#{strId}
+	</select>
+	
+	
+	<!-- 회원정보 DB insert 작업 -->
+	<insert id="insertMember" parameterType="spring.mvc.bms.member.vo.MemberVO">
+		<![CDATA[
+		INSERT INTO member (id, pwd, name, jumin, address, birth, hp, email, reg_date)
+		VALUES (#{id},#{pwd},#{name},#{jumin},#{address},#{birth},#{hp},#{email},sysdate)
+		]]>
+	</insert>
+	
+	<!-- 회원탈퇴시 DB delete 작업 -->
+	<delete id="deleteMember" parameterType="String">
+		DELETE FROM member WHERE id=#{strId}
+	</delete>
+		
+	<!-- 회원정보 수정 DB update 작업 -->
+	<update id="updateMember" parameterType="spring.mvc.bms.member.vo.MemberVO">
+		UPDATE member SET pwd=#{pwd},hp=#{hp},email=#{email},birth=#{birth},address=#{address}
+	</update>
+</mapper>
